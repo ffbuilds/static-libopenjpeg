@@ -6,9 +6,10 @@ ARG OPENJPEG_VERSION=2.5.0
 ARG OPENJPEG_URL="https://github.com/uclouvain/openjpeg/archive/v$OPENJPEG_VERSION.tar.gz"
 ARG OPENJPEG_SHA256=0333806d6adecc6f7a91243b2b839ff4d2053823634d4f6ed7a59bc87409122a
 
-# bump: alpine /FROM alpine:([\d.]+)/ docker:alpine|^3
-# bump: alpine link "Release notes" https://alpinelinux.org/posts/Alpine-$LATEST-released.html
-FROM alpine:3.16.2 AS base
+# Must be specified
+ARG ALPINE_VERSION
+
+FROM alpine:${ALPINE_VERSION} AS base
 
 FROM base AS download
 ARG OPENJPEG_URL
@@ -30,7 +31,7 @@ COPY --from=download /tmp/openjpeg/ /tmp/openjpeg/
 WORKDIR /tmp/openjpeg/build
 RUN \
   apk add --no-cache --virtual build \
-    build-base cmake && \
+    build-base cmake pkgconf && \
   cmake \
     -G"Unix Makefiles" \
     -DCMAKE_VERBOSE_MAKEFILE=ON \
@@ -42,6 +43,11 @@ RUN \
     -DBUILD_TESTING=OFF \
     .. && \
   make -j$(nproc) install && \
+  # Sanity tests
+  pkg-config --exists --modversion --path libopenjp2 && \
+  ar -t /usr/local/lib/libopenjp2.a && \
+  readelf -h /usr/local/lib/libopenjp2.a && \
+  # Cleanup
   apk del build
 
 FROM scratch
