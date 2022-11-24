@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 
 # bump: openjpeg /OPENJPEG_VERSION=([\d.]+)/ https://github.com/uclouvain/openjpeg.git|*
 # bump: openjpeg after ./hashupdate Dockerfile OPENJPEG $LATEST
